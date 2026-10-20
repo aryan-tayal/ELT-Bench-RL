@@ -3,9 +3,22 @@ import io
 import pandas as pd
 from ..warehouse.base import Warehouse
 from .compare import check_correctness, sort_by_keys
+from dataclasses import dataclass, field
 
+W_STAGE1 = 0.2
+W_STAGE2 = 0.8
 AIRBYTE_COLS = {"_airbyte_raw_id", "_airbyte_extracted_at"}
 
+
+@dataclass
+class ScoreResult:
+    reward: float
+    stage1: float
+    stage2: float
+    details: dict = field(default_factory=dict)
+
+    def metrics(self):
+        return {"reward": self.reward, "stage1": self.stage1, "stage2": self.stage2}
 
 def score_stage1(wh, schema, expected_raw):
     detail = {}
@@ -54,3 +67,14 @@ def score_stage2(wh, schema, gt_dir, sort_keys):
         per_table[table] = {"score": score, "status": "ok", **res}
     scores = [v["score"] for v in per_table.values()]
     return (sum(scores) / len(scores) if scores else 0.0), per_table
+
+
+def score_warehouse(wh, schema, expected_raw, gt_dir, sort_keys):
+    s1, d1 = score_stage1(wh, schema, expected_raw)
+    s2, d2 = score_stage2(wh, schema, gt_dir, sort_keys)
+    return ScoreResult(
+        reward=W_STAGE1 * s1 + W_STAGE2 * s2,
+        stage1=s1,
+        stage2=s2,
+        details={"stage1": d1, "stage2": d2},
+    )

@@ -20,6 +20,7 @@ class ScoreResult:
     def metrics(self):
         return {"reward": self.reward, "stage1": self.stage1, "stage2": self.stage2}
 
+
 def score_stage1(wh, schema, expected_raw):
     detail = {}
     if not wh.schema_exists(schema):
@@ -32,6 +33,8 @@ def score_stage1(wh, schema, expected_raw):
             detail[table] = "missing"
         elif wh.table_size(schema, t) != n_rows:
             detail[table] = "row_count"
+        elif not AIRBYTE_COLS <= {c.lower() for c in wh.columns(schema, t)}:
+            detail[table] = "no_airbyte_metadata"
         else:
             detail[table] = "ok"
             ok += 1

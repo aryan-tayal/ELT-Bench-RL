@@ -84,3 +84,40 @@ def check_correctness(df_gt: pd.DataFrame, df: pd.DataFrame) -> dict:
         "unmatched": unmatched_cols,
         "missed": missed_cols,
     }
+
+
+def _sort_series_key(col: pd.Series) -> pd.Series:
+    """Build a type-consistent sort key for one column.
+
+    Numeric-coerce when every non-null value parses cleanly (so `1389` and
+    `1389.0000000000` collapse to the same value); otherwise compare as
+    trimmed, lower-cased strings. NaNs are preserved so na_position applies.
+    """
+    num = pd.to_numeric(col, errors="coerce")
+    n_non_null = col.notna().sum()
+    if n_non_null > 0 and int(num.notna().sum()) == int(n_non_null):
+        return num
+    return col.astype("string").str.strip().str.lower()
+
+
+def sort_by_keys(df: pd.DataFrame, keys: list) -> pd.DataFrame:
+    """Return df sorted by `keys` (resolved case-insensitively), with every
+    remaining column appended as a deterministic tie-breaker. Sort keys are
+    type-coerced so format-only differences don't change the ordering."""
+    if df is None or df.empty:
+        return df.reset_index(drop=True) if df is not None else df
+
+    lower = {c.lower(): c for c in df.columns}
+    resolved = []
+    for k in keys:
+        actual = lower.get(k.lower())
+        if actual is not None and actual not in resolved:
+            resolved.append(actual)
+    # keys first, then everything else as tie-breakers -> fully deterministic
+    ordered_cols = resolved + [c for c in df.columns if c not in resolved]
+    if not ordered_cols:
+        return df.reset_index(drop=True)
+
+    aux = pd.DataFrame({c: _sort_series_key(df[c]) for c in ordered_cols})
+    order = aux.sort_values(by=ordered_cols, kind="mergesort", na_position="last").index
+    return df.loc[order].reset_index(drop=True)

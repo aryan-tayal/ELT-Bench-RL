@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets and credentials 
+.env
+.env.*
+*_credential.json
+*_credentials.json
+airbyte_credentials.json
+*.tfvars
+*.pem
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfstate.backup
+.terraform.lock.hcl
+
+# dbt
+target/
+dbt_packages/
+logs/
+.user.yml
+profiles.yml
+
+# DuckDB / local warehouse files
+*.duckdb
+*.duckdb.wal
+*.db
+
+# Rollout and run artifacts
+runs/
+agent_results/
+rollouts/
+*.log
+
+# Tinker / training outputs
+wandb/
+checkpoints/
+
+# External data 
+ground_truth/
+gt_*/
+inputs/
+inputs_*/
+ELT-Bench/
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

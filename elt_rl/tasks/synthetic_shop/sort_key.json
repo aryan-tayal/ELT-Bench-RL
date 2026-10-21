@@ -1,0 +1,6 @@
+{
+  "synthetic_shop": {
+    "customer_summary": ["customer_id"],
+    "country_summary": ["country"]
+  }
+}

@@ -1,0 +1,7 @@
+name: elt
+version: "1.0.0"
+profile: elt
+model-paths: ["models"]
+models:
+  elt:
+    +materialized: table

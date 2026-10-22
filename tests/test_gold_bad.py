@@ -11,10 +11,14 @@ from elt_rl.tasks.synthetic_shop import load_task
 from elt_rl.warehouse import DuckDBWarehouse
 
 TASK = load_task()
-ALL_STREAMS = [{"name": n, "sync_mode": "full_refresh_append"} for n in TASK.expected_raw]
+ALL_STREAMS = [
+    {"name": n, "sync_mode": "full_refresh_append"} for n in TASK.expected_raw
+]
 
 
-def build(tmp_path: Path, models_dir: Path | None, streams=ALL_STREAMS, el_runs: int = 1):
+def build(
+    tmp_path: Path, models_dir: Path | None, streams=ALL_STREAMS, el_runs: int = 1
+):
     db = tmp_path / "warehouse.duckdb"
     for _ in range(el_runs):
         if streams:
@@ -29,7 +33,9 @@ def build(tmp_path: Path, models_dir: Path | None, streams=ALL_STREAMS, el_runs:
 
 
 def grade(wh):
-    return score_warehouse(wh, TASK.schema, TASK.expected_raw, TASK.gt_dir, TASK.sort_keys)
+    return score_warehouse(
+        wh, TASK.schema, TASK.expected_raw, TASK.gt_dir, TASK.sort_keys
+    )
 
 
 def test_gold_scores_one(tmp_path):
@@ -39,6 +45,7 @@ def test_gold_scores_one(tmp_path):
 
 def test_bad_pipeline_scores_low(tmp_path):
     r = grade(build(tmp_path, TASK.bad_dir))
+    print("BAD:", r.reward, r.stage1, r.stage2)
     assert r.stage1 == 1.0
     assert 0.2 < r.reward < 0.5, r.details
 
@@ -60,11 +67,14 @@ def test_double_sync_breaks_stage1(tmp_path):
 
 def test_fake_tables_without_airbyte_metadata_fail_stage1(tmp_path):
     import duckdb
+
     db = tmp_path / "warehouse.duckdb"
     con = duckdb.connect(str(db))
     con.execute(f"create schema {TASK.schema}")
     for t, n in TASK.expected_raw.items():
-        con.execute(f"create table {TASK.schema}.{t} as select range as x from range({n})")
+        con.execute(
+            f"create table {TASK.schema}.{t} as select range as x from range({n})"
+        )
     con.close()
     r = grade(DuckDBWarehouse(db))
     assert r.stage1 == 0.0

@@ -1,0 +1,6 @@
+customer_id,name,num_orders,total_amount,has_refund,above_avg_spend
+1,Alice,2,80.0,1,1
+2,Bob,0,0.0,0,0
+3,Chen,2,125.5,1,1
+4,Dara,0,0.0,0,0
+5,Eli,0,0.0,0,0

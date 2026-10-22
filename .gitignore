@@ -55,11 +55,11 @@ wandb/
 checkpoints/
 
 # External data 
-ground_truth/
-gt_*/
-inputs/
-inputs_*/
-ELT-Bench/
+/ground_truth/
+/gt_*/
+/inputs/
+/inputs_*/
+/ELT-Bench/
 
 # Editors and OS
 .DS_Store

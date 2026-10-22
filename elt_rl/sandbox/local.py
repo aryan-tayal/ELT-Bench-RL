@@ -9,6 +9,7 @@ from pathlib import Path
 
 DEFAULT_MAX_OUTPUT = 16384
 
+
 @dataclass
 class SandboxResult:
     stdout: str
@@ -57,3 +58,23 @@ class LocalSandbox:
             err[:limit].decode(errors="replace"),
             proc.returncode,
         )
+
+    async def write_file(self, path, content, executable=False, timeout=60):
+        p = self._resolve(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        if isinstance(content, bytes):
+            p.write_bytes(content)
+        else:
+            p.write_text(content)
+        if executable:
+            p.chmod(0o755)
+        return SandboxResult("", "", 0)
+
+    async def read_file(self, path, max_bytes=None, timeout=60):
+        p = self._resolve(path)
+        if not p.is_file():
+            return SandboxResult("", f"no such file: {path}", 1)
+        data = p.read_bytes()
+        if max_bytes is not None:
+            data = data[:max_bytes]
+        return SandboxResult(data.decode(errors="replace"), "", 0)

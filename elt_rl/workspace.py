@@ -1,3 +1,4 @@
+import csv
 from pathlib import Path
 
 import yaml
@@ -65,6 +66,7 @@ DATA_MODEL = {
     ]
 }
 
+
 def _write_config(task, sandbox_root: Path, db_path: Path) -> None:
     config = {
         "source_dir": str(Path(task.source_dir).resolve()),
@@ -76,3 +78,32 @@ def _write_config(task, sandbox_root: Path, db_path: Path) -> None:
         "streams_available": sorted(task.expected_raw),
     }
     (sandbox_root / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False))
+
+
+def _write_data_model(sandbox_root: Path) -> None:
+    (sandbox_root / "data_model.yaml").write_text(
+        yaml.safe_dump(DATA_MODEL, sort_keys=False)
+    )
+
+
+def _write_schemas(task, sandbox_root: Path) -> None:
+    schemas_dir = sandbox_root / "schemas"
+    schemas_dir.mkdir(parents=True, exist_ok=True)
+    for table in sorted(task.expected_raw):
+        with open(Path(task.source_dir) / f"{table}.csv", newline="") as f:
+            header = next(csv.reader(f))
+        descriptions = RAW_COLUMN_DESCRIPTIONS[table]
+        with open(schemas_dir / f"{table}.csv", "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["column_name", "column_description"])
+            for column in header:
+                writer.writerow([column, descriptions.get(column, "")])
+
+
+def build_workspace(task, sandbox_root, db_path) -> None:
+    sandbox_root = Path(sandbox_root)
+    sandbox_root.mkdir(parents=True, exist_ok=True)
+    _write_config(task, sandbox_root, Path(db_path))
+    _write_data_model(sandbox_root)
+    _write_schemas(task, sandbox_root)
+    (sandbox_root / "elt").mkdir(exist_ok=True)

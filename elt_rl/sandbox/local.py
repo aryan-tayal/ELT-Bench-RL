@@ -29,3 +29,9 @@ class LocalSandbox:
 
     async def cleanup(self) -> None:
         shutil.rmtree(self.root, ignore_errors=True)
+
+    def _resolve(self, path) -> Path:
+        p = (self.root / path).resolve()
+        if not p.is_relative_to(self.root):
+            raise ValueError(f"path escapes sandbox: {path}")
+        return p

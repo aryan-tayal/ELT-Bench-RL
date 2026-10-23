@@ -28,3 +28,35 @@ class ELTTools:
                 {"exit_code": r.exit_code, "stdout": r.stdout, "stderr": r.stderr}
             )
         )
+
+    @tool
+    async def read_file(
+        self,
+        path: Annotated[str, "Path relative to the workspace root, e.g. config.yaml"],
+    ) -> ToolResult:
+        """Read a text file from the workspace."""
+        try:
+            r = await self._sandbox.read_file(path, max_bytes=MAX_OUTPUT_CHARS)
+        except ValueError as e:
+            return simple_tool_result(f"error: {e}")
+        return simple_tool_result(
+            r.stdout if r.exit_code == 0 else f"error: {r.stderr}"
+        )
+
+    @tool
+    async def write_file(
+        self,
+        path: Annotated[str, "Path under elt/, e.g. elt/sources.yaml"],
+        content: Annotated[str, "Full file content to write."],
+    ) -> ToolResult:
+        """Write a file under elt/. Parent folders are created automatically."""
+        clean = posixpath.normpath(path)
+        if not clean.startswith(WRITABLE_PREFIX):
+            return simple_tool_result(
+                f"error: you may only write under {WRITABLE_PREFIX}"
+            )
+        try:
+            await self._sandbox.write_file(clean, content)
+        except ValueError as e:
+            return simple_tool_result(f"error: {e}")
+        return simple_tool_result(f"wrote {clean}")

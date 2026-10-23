@@ -3,12 +3,22 @@ import sys
 import tempfile
 from pathlib import Path
 
-from elt_rl.dbt_utils import write_profile
+# from elt_rl.dbt_utils import write_profile
 from elt_rl.grading import score_warehouse
 from elt_rl.sandbox.local import LocalSandbox
 from elt_rl.tasks.synthetic_shop import load_task
 from elt_rl.warehouse import DuckDBWarehouse
 from elt_rl.workspace import build_workspace
+
+PROFILE_YML = """elt:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{path}"
+      schema: {schema}
+      threads: 1
+"""
 
 TASK = load_task()
 
@@ -38,7 +48,10 @@ async def run_scripted(models_dir: Path) -> dict:
             if f.is_file():
                 rel = f.relative_to(models_dir)
                 await sb.write_file(f"elt/dbt/{rel}", f.read_text())
-        write_profile(sb.root / "elt" / "dbt", db_path, TASK.schema)
+        await sb.write_file(
+            "elt/dbt/profiles.yml",
+            PROFILE_YML.format(path=db_path, schema=TASK.schema),
+        )
         r = await sb.run_command(
             f"{Path(sys.executable).parent / 'dbt'} run "
             "--project-dir elt/dbt --profiles-dir elt/dbt"

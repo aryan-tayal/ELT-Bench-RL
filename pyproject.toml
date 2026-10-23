@@ -10,6 +10,7 @@ dependencies = ["duckdb", "dbt-duckdb", "pandas", "numpy", "pyyaml"]
 
 [project.optional-dependencies]
 dev = ["pytest"]
+tinker = ["tinker", "tinker-cookbook"]
 
 [tool.setuptools.packages.find]
 include = ["elt_rl*"]

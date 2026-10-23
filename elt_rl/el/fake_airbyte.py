@@ -1,6 +1,9 @@
 import re
 import duckdb
 from pathlib import Path
+import argparse
+import yaml
+
 
 IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -45,3 +48,23 @@ def load_streams(source_dir, db_path, schema, streams):
     finally:
         con.close()
     return loaded
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--config", required=True)
+    ap.add_argument("--streams", required=True)
+    args = ap.parse_args()
+    cfg = yaml.safe_load(Path(args.config).read_text())
+    streams = yaml.safe_load(Path(args.streams).read_text())["streams"]
+    names = load_streams(
+        source_dir=cfg["source_dir"],
+        db_path=cfg["destination"]["path"],
+        schema=cfg["destination"]["schema"],
+        streams=streams,
+    )
+    print("loaded streams: " + ", ".join(names))
+
+
+if __name__ == "__main__":
+    main()

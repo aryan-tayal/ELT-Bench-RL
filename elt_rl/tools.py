@@ -63,8 +63,5 @@ class ELTTools:
 
     @tool
     async def submit(self) -> ToolResult:
-        """Submit the finished pipeline for grading. This ends the episode."""
         self.submitted = True
-        result = simple_tool_result("submitted")
-        result.should_stop = True
-        return result
+        return simple_tool_result("submitted", should_stop=True)

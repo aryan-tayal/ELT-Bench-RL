@@ -81,3 +81,37 @@ def gold_turns(db_path: Path):
     )
     turns.append(message(call("submit")))
     return turns
+
+
+def run_policy(turns, tmp):
+    async def go():
+        env, db_path = make_env(tmp)
+        await env.initial_observation()
+        result = None
+        for t in turns(db_path):
+            result = await env.step(t)
+            if result.episode_done:
+                break
+        return result
+
+    return asyncio.run(go())
+
+
+def test_gold_policy_gets_full_reward(tmp_path):
+    result = run_policy(gold_turns, tmp_path)
+    assert result.episode_done
+    assert abs(result.reward - 1.0) < 1e-9, result
+
+
+def test_submit_without_work_gets_zero(tmp_path):
+    result = run_policy(lambda db: [message(call("submit"))], tmp_path)
+    assert result.episode_done
+    assert result.reward == 0.0, result
+
+
+def test_no_tool_call_ends_episode_with_zero(tmp_path):
+    result = run_policy(
+        lambda db: [{"role": "assistant", "content": "RESULT: SUCCESS"}], tmp_path
+    )
+    assert result.episode_done
+    assert result.reward == 0.0, result
